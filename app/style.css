@@ -3,3 +3,8 @@
     text-align: center;
     padding: 20px;
 }
+
+.network-vis-container {
+    display: block;
+    height: 300px;
+}

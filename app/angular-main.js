@@ -40,13 +40,71 @@
 
     app.factory('networkVisFactory', [function() {
 
-        return function() {
+        return function(id, model) {
 
-            this.draw = function(id) {
-                console.log(id)
+            model = {
+                nodes: [
+                    {data:{id:'PE1'}},
+                    {data:{id:'P1'}},
+                    {data:{id:'BX1'}}
+                ],
+                edges: [
+                    {data: {id:'PE1-P1', source:'PE1', target:'P1'}},
+                    {data: {id:'P1-BX1', source:'P1', target:'BX1'}}
+                ]
 
+            };
 
-            }
+            this.cy = cytoscape({
+                container: document.getElementById(id),
+
+                style: [
+                    {
+                        selector: 'node',
+                        css: {
+                            'background-color': '#B3767E',
+                            'content': 'data(id)'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        css: {
+                            'line-color': '#F2B1BA',
+                            'target-arrow-color': '#F2B1BA',
+                            'width': 2,
+                            'target-arrow-shape': 'circle',
+                            'opacity': 0.8
+                        }
+                    },
+                    {
+                        selector: ':selected',
+                        css: {
+                            'background-color': 'black',
+                            'line-color': 'black',
+                            'target-arrow-color': 'black',
+                            'source-arrow-color': 'black',
+                            'opacity': 1
+                        }
+                    },
+                    {
+                        selector:'.faded',
+                        css: {
+                            'opacity': 0.25,
+                            'text-opacity': 0
+                        }
+                    }
+                ],
+
+                elements: model,
+                maxZoom: 10,
+                minZoom: 1,
+
+                layout: {
+                    name: 'grid',
+                    padding: 5
+                }
+            });
+
 
         };
     }]);
@@ -58,8 +116,14 @@
             scope : {
                 id : '@'
             },
-            link: function(scope) {
-                console.log('yo')
+            template:'<button class="btn btn-default" ng-click="reset()">Reset Fit</button>',
+            link: function(scope, element) {
+                element.addClass('network-vis-container');
+                var nvis = new networkVisFactory(scope.id);
+
+                scope.reset = function(){
+                    nvis.cy.fit();
+                }
             }
         }
 
@@ -196,7 +260,6 @@
                 title: "@",
                 model: "="
             },
-            templateUrl: 'templates/routerModelEditorTemplate.html',
             link : function(scope) {
 
                 var desc;
