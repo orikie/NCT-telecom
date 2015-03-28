@@ -1,0 +1,11 @@
+{
+  "nodes": [
+    {"data":{"id":"PE1"}},
+    {"data":{"id":"P1"}},
+    {"data":{"id":"BX1"}}
+  ],
+  "edges": [
+    {"data": {"id":"PE1-P1", "source":"PE1", "target":"P1"}},
+    {"data": {"id":"P1-BX1", "source":"P1", "target":"BX1"}}
+  ]
+}

@@ -16,7 +16,9 @@
            bxLoaded : false,
            peCostModel: {},
            peCostModel: {},
-           bxCostModel: {}
+           bxCostModel: {},
+           topoLoaded: false,
+           topologyModel: {}
        };
     });
 
@@ -24,16 +26,14 @@
 
         return {
             json: function(dataFile, cb) {
-
                 var url = 'data/' + globalOptions[dataFile].value;
-                $http.get(url, {
+                return $http.get(url, {
                     cache: true
                 }).success(function(data) {
                     cb(data)
                 }).error(function(data){
                     console.log('Cost Model Load Error');
                 });
-
             }
         }
     }]);
@@ -42,18 +42,14 @@
 
         return function(id, model) {
 
-            model = {
-                nodes: [
-                    {data:{id:'PE1'}},
-                    {data:{id:'P1'}},
-                    {data:{id:'BX1'}}
-                ],
-                edges: [
-                    {data: {id:'PE1-P1', source:'PE1', target:'P1'}},
-                    {data: {id:'P1-BX1', source:'P1', target:'BX1'}}
-                ]
 
-            };
+            if (jQuery.isEmptyObject(model)) {
+
+                model = {
+                    "nodes": [],
+                    "edges": []
+                }
+            }
 
             this.cy = cytoscape({
                 container: document.getElementById(id),
@@ -72,17 +68,16 @@
                             'line-color': '#F2B1BA',
                             'target-arrow-color': '#F2B1BA',
                             'width': 2,
-                            'target-arrow-shape': 'circle',
                             'opacity': 0.8
                         }
                     },
                     {
                         selector: ':selected',
                         css: {
-                            'background-color': 'black',
-                            'line-color': 'black',
-                            'target-arrow-color': 'black',
-                            'source-arrow-color': 'black',
+                            'background-color': 'red',
+                            'line-color': 'red',
+                            'target-arrow-color': 'red',
+                            'source-arrow-color': 'red',
                             'opacity': 1
                         }
                     },
@@ -94,7 +89,7 @@
                         }
                     }
                 ],
-
+                motionBlur: false,
                 elements: model,
                 maxZoom: 10,
                 minZoom: 1,
@@ -104,24 +99,46 @@
                     padding: 5
                 }
             });
-
-
         };
     }]);
 
-    app.directive('networkVis', ['networkVisFactory', function(networkVisFactory) {
+    app.directive('networkVis', ['networkVisFactory','_globals', function(networkVisFactory, _globals) {
+
+        function validTopology(t) {
+
+            if (typeof t !== 'undefined') {
+                for(var i = 0; i < t.nodes.length; i++) {
+                    if(t.nodes[i].data.id === "") return false;
+                }
+
+                for(var j = 0; j < t.edges.length; j++) {
+                    if(t.edges[j].data.id === "") return false;
+                }
+            }
+
+            return true;
+        }
 
         return {
             restrict : 'E',
             scope : {
-                id : '@'
+                id : '@',
+                model: '='
             },
             template:'<button class="btn btn-default" ng-click="reset()">Reset Fit</button>',
             link: function(scope, element) {
-                element.addClass('network-vis-container');
-                var nvis = new networkVisFactory(scope.id);
 
-                scope.reset = function(){
+                var nvis = new networkVisFactory(scope.id, _globals.topologyModel);
+                element.addClass('network-vis-container');
+
+                scope.$watch('model', function(d) {
+
+                    if (!jQuery.isEmptyObject(d) && validTopology(d)) {
+                        nvis.cy.load(d);
+                    }
+                });
+
+                scope.reset = function() {
                     nvis.cy.fit();
                 }
             }
@@ -141,11 +158,15 @@
                 "name" : "P Cost File",
                 "value" : "p_cost.json",
                 "description": "Provider Core Router Capital Costs"
-            }
-            ,
+            },
             "bx_cost": {
                 "name" : "BX Cost File",
                 "value" : "bx_cost.json",
+                "description": "Border Router Capital Costs"
+            },
+            "network_topo": {
+                "name" : "Network Topology File",
+                "value" : "network_topology.json",
                 "description": "Border Router Capital Costs"
             }
 
@@ -216,7 +237,21 @@
 
     }]);
 
-    app.controller('TopologyConfigController', ['$scope', 'version', function($scope, version) {
+    app.controller('TopologyConfigController', ['$scope','loadData','_globals', function($scope, loadData, _globals) {
+
+        if(!_globals.topoLoaded) {
+            loadData.json('network_topo', function(d) {
+
+                if (typeof d != 'undefined') {
+
+                    _globals.topologyModel = d;
+                    _globals.topoLoaded = true;
+                    $scope.topoModel = _globals.topologyModel;
+                    console.log($scope.topoModel);
+                }
+            });
+        }
+        $scope.topoModel = _globals.topologyModel
 
     }]);
 
@@ -252,7 +287,7 @@
 
     }]);
 
-    app.directive('routerModelEditor', [function(){
+    app.directive('routerModelEditor', ['_globals',function(_globals){
         return {
             restrict: 'E',
             scope: {
@@ -337,7 +372,7 @@
                     }
                 };
 
-                var editorPE = new JSONEditor(
+                var editor = new JSONEditor(
                     document.getElementById(scope.id),
                     {
                         theme: "bootstrap3",
@@ -352,21 +387,136 @@
 
                 scope.$watch('model', function(d) {
                     //console.log("model updated", d);
-                    editorPE.setValue(d);
+                    editor.setValue(d);
                 })
 
                 //scope.validPE = true;
                 //
-                //editorPE.on("change", function() {
-                //
-                //    var alertStatusPE = editorPE.validate().length ? "alert-danger" : "alert-success";
-                //
-                //    $("#peStatus").toggleClass(alertStatusPE, true);
-                //
-                //});
+                editor.on("change", function() {
+
+                    var v = editor.getValue();
+                    scope.model = v;
+                    switch (scope.title) {
+                        case "P":
+                            _globals.pCostModel = v;
+                            break;
+                        case "PE":
+                            _globals.peCostModel = v;
+                            break;
+                        case "BX":
+                            _globals.bxCostModel = v;
+                            break;
+                        default:
+
+                    }
+
+                });
 
             }
         }
+    }])
+
+    app.directive('topologyModelEditor', ['_globals', function(_globals){
+        return {
+            restrict: 'E',
+            scope: {
+                id: '@',
+                model : '='
+            },
+            link: function(scope) {
+
+                var schema = {
+                    type: "object",
+                    title : "Network Topology",
+                    properties: {
+                        nodes: {
+                            type: "array",
+                            "format": "tabs",
+                            title: "Routers",
+                            items: {
+                                type: "object",
+                                title: "router",
+                                "headerTemplate": "{{self.data.id}}",
+                                properties: {
+                                    data: {
+                                        type: "object",
+                                        title: "Details",
+                                        properties: {
+                                            id: {
+                                                type: "string",
+                                                title: "ID"
+                                            }
+                                        }
+                                    },
+                                    group: {
+                                        type: "string",
+                                        default:"nodes",
+                                        description: "The type of data: nodes for router type",
+                                        readonly: true
+                                    }
+                                }
+                            }
+
+                        },
+                        edges: {
+                            type: "array",
+                            "format": "tabs",
+                            title: "Links",
+                            items: {
+                                type: "object",
+                                title: "link",
+                                headerTemplate: "{{self.data.id}}",
+                                properties: {
+                                    data: {
+                                        type: "object",
+                                        title: "Details",
+                                        properties : {
+                                            id: {type: "string"},
+                                            source: {type: "string"},
+                                            target: {type: "string"}
+                                        }
+                                    },
+                                    group: {
+                                        type: "string",
+                                        default:"edges",
+                                        description: "The type of data: edges for links",
+                                        readonly: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                var editor = new JSONEditor(
+                    document.getElementById(scope.id),
+                    {
+                        theme: "bootstrap3",
+                        iconlib: "fontawesome4",
+                        disable_edit_json: false,
+                        disable_properties: true,
+                        disable_array_delete: false,
+                        disable_array_reorder: true,
+                        schema: schema
+
+                    }
+                );
+
+                editor.on("change", function() {
+
+                    var v = editor.getValue();
+                    scope.model = v;
+                    scope.$apply(function() {
+                        scope.$parent.topoModel = v;
+                        _globals.topologyModel = v;
+                    });
+                });
+
+                scope.$watch('model', function(d) {
+                    editor.setValue(d);
+                });
+            }
+        };
     }]);
 
 }());
