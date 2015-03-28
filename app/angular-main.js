@@ -9,14 +9,26 @@
     app.value('version', '0.0.3')
     app.value('repoLink', 'https://github.com/linjoey/NCT-telecom');
 
+    app.factory('_globals', function() {
+       return {
+           peLoaded : false,
+           pLoaded : false,
+           bxLoaded : false,
+           peCostModel: {},
+           peCostModel: {},
+           bxCostModel: {}
+       };
+    });
+
     app.factory('loadData', ['$http', 'globalOptions', function($http, globalOptions) {
 
         return {
             json: function(dataFile, cb) {
+
                 var url = 'data/' + globalOptions[dataFile].value;
                 $http.get(url, {
                     cache: true
-                }).success(function(data){
+                }).success(function(data) {
                     cb(data)
                 }).error(function(data){
                     console.log('Cost Model Load Error');
@@ -24,6 +36,33 @@
 
             }
         }
+    }]);
+
+    app.factory('networkVisFactory', [function() {
+
+        return function() {
+
+            this.draw = function(id) {
+                console.log(id)
+
+
+            }
+
+        };
+    }]);
+
+    app.directive('networkVis', ['networkVisFactory', function(networkVisFactory) {
+
+        return {
+            restrict : 'E',
+            scope : {
+                id : '@'
+            },
+            link: function(scope) {
+                console.log('yo')
+            }
+        }
+
     }]);
 
     app.factory('globalOptions', [function() {
@@ -66,19 +105,50 @@
 
     }]);
 
-    app.controller('CostmodelConfigController', ['$scope', 'loadData', function($scope, loadData) {
+    app.controller('CostmodelConfigController', ['$scope', 'loadData','_globals', function($scope, loadData, _globals) {
 
-        loadData.json('pe_cost', function(d) {
-            $scope.peCost = d;
-        });
 
-        loadData.json('p_cost', function(d) {
-            $scope.pCost = d;
-        });
+        if(!_globals.peLoaded) {
 
-        loadData.json('bx_cost', function(d) {
-            $scope.bxCost = d;
-        });
+            loadData.json('pe_cost', function(d) {
+
+                if (typeof d != 'undefined') {
+                    _globals.peCostModel = d;
+                    _globals.peLoaded = true;
+                    $scope.peCost = _globals.peCostModel;
+                }
+            });
+        }
+        $scope.peCost = _globals.peCostModel;
+
+        if(!_globals.pLoaded) {
+
+            loadData.json('p_cost', function(d) {
+
+                if (typeof d != 'undefined') {
+
+                    _globals.pCostModel = d;
+                    _globals.pLoaded = true;
+                    $scope.pCost = _globals.pCostModel;
+                }
+            });
+        }
+        $scope.pCost = _globals.pCostModel;
+
+        if(!_globals.bxLoaded) {
+
+            loadData.json('bx_cost', function(d) {
+
+                if (typeof d != 'undefined') {
+
+                    _globals.bxCostModel = d;
+                    _globals.bxLoaded = true;
+                    $scope.bxCost = _globals.bxCostModel;
+                }
+            });
+        }
+        $scope.bxCost = _globals.bxCostModel;
+
 
     }]);
 
@@ -127,14 +197,14 @@
                 model: "="
             },
             templateUrl: 'templates/routerModelEditorTemplate.html',
-            link : function(scope, element, attrs) {
+            link : function(scope) {
 
                 var desc;
                 switch (scope.title) {
-                    case "P":
+                    case "PE":
                         desc = "Provider Edge Router";
                         break;
-                    case "PE":
+                    case "P":
                         desc = "Provider Core Router";
                         break;
                     case "BX":
@@ -218,7 +288,7 @@
                 );
 
                 scope.$watch('model', function(d) {
-                    console.log("model updated", d);
+                    //console.log("model updated", d);
                     editorPE.setValue(d);
                 })
 
@@ -235,4 +305,5 @@
             }
         }
     }]);
+
 }());
