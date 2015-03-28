@@ -1,0 +1,26 @@
+{
+  "hardware": {
+    "chasis": 25000,
+    "memory": 10000,
+    "processor": 10000,
+    "power": 2500
+  },
+  "slots": [
+    {
+      "name": "slot 1",
+      "config": "UNI",
+      "cardType": "10BT/ 100BT",
+      "ports" :20,
+      "capacity": 2000,
+      "material": 10000
+    },
+    {
+      "name": "slot 2",
+      "config": "NNI",
+      "cardType": "40GE",
+      "ports" : 4,
+      "capacity": 160000,
+      "material": 125000
+    }
+  ]
+}

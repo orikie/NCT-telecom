@@ -1,0 +1,26 @@
+{
+  "hardware": {
+    "chasis": 30000,
+    "memory": 20000,
+    "processor": 20000,
+    "power": 4500
+  },
+  "slots": [
+    {
+      "name": "slot 1",
+      "config": "PE-P",
+      "cardType": "10GE",
+      "ports" : 10,
+      "capacity": 100000,
+      "material": 90000
+    },
+    {
+      "name": "slot 2",
+      "config": "P-P/BX",
+      "cardType": "10GE",
+      "ports" : 4,
+      "capacity": 400000,
+      "material": 125000
+    }
+  ]
+}
