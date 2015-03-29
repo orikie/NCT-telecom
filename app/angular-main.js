@@ -165,7 +165,7 @@
                         _globals.coreRouters = core.descendants();
                     }
 
-                    var edge = nvis.cy.collection("Edge");
+                    var edge = nvis.cy.collection("#Edge");
                     if(edge.length != 0) {
                         _globals.edgeRouters = edge.descendants();
                     }
@@ -289,7 +289,7 @@
 
     }]);
 
-    app.controller('AnalysisController', ['$scope', function($scope) {
+    app.controller('AnalysisController', ['$scope','_globals', function($scope, _globals) {
 
         var DSL_TYPE = 1;
         var VPN_TYPE = 2;
@@ -335,6 +335,25 @@
         $scope.sel100Class = "";
         $scope.selGEClass = "";
         $scope.sel100GEClass = "";
+
+        $scope.edgeRouters = _globals.edgeRouters;
+        $scope.coreRouters = _globals.coreRouters;
+
+        $scope.peSelected = [];
+        $scope.peSel = function(pe) {
+            var i = $scope.peSelected.indexOf(pe);
+            if( i < 0) {
+                $scope.peSelected.push(pe);
+
+            }else {
+                $scope.peSelected.splice(i, 1);
+            }
+        }
+
+        $scope.showPEError = function() {
+            return $scope.peSelected.length >= 1 ? false : true;
+        }
+
 
     }]);
 
