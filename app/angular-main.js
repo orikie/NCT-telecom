@@ -6,7 +6,7 @@
     /**
      * Current Version
      */
-    app.value('version', '0.0.3')
+    app.value('version', '0.2.3')
     app.value('repoLink', 'https://github.com/linjoey/NCT-telecom');
 
     app.factory('_globals', function() {
@@ -18,7 +18,9 @@
            peCostModel: {},
            bxCostModel: {},
            topoLoaded: false,
-           topologyModel: {}
+           topologyModel: {},
+           edgeRouters: [],
+           coreRouters: []
        };
     });
 
@@ -59,7 +61,20 @@
                         selector: 'node',
                         css: {
                             'background-color': '#B3767E',
-                            'content': 'data(id)'
+                            'content': 'data(id)',
+                            'text-valign': 'center',
+                            'text-halign': 'center'
+                        }
+                    },
+                    {
+                        selector: '$node > node',
+                        css: {
+                            'padding-top': '10px',
+                            'padding-left': '10px',
+                            'padding-bottom': '10px',
+                            'padding-right': '10px',
+                            'text-valign': 'top',
+                            'text-halign': 'center'
                         }
                     },
                     {
@@ -133,17 +148,34 @@
                 var nvis = new networkVisFactory(scope.id, _globals.topologyModel);
                 element.addClass('network-vis-container');
 
+
+                console.log();
+
                 scope.$watch('model', function(d) {
 
                     var v = validTopology(d);
                     if (!jQuery.isEmptyObject(d) && v) {
                         nvis.cy.load(d);
                     }
+
+                    var core = nvis.cy.collection("#Core");
+                    if(core.length != 0) {
+                        //console.log(core.length);
+                        //console.log(core.descendants());
+                        _globals.coreRouters = core.descendants();
+                    }
+
+                    var edge = nvis.cy.collection("Edge");
+                    if(edge.length != 0) {
+                        _globals.edgeRouters = edge.descendants();
+                    }
+
                 });
 
                 scope.reset = function() {
                     nvis.cy.fit();
                 }
+
             }
         }
 
@@ -282,16 +314,27 @@
                 connectionType = VPN_TYPE;
                 $scope.typeLabel = type;
             }
+
         };
 
         $scope.selSpeedClick = function(speed) {
             $scope.selSpeed = speed;
+            $scope.sel15Class = speed == "15M" ? "active" : "";
+            $scope.sel25Class = speed == "25M" ? "active" : "";
+            $scope.sel50Class = speed == "50M" ? "active" : "";
+            $scope.sel100Class = speed == "100M" ? "active" : "";
+            $scope.selGEClass = speed == "GE" ? "active" : "";
+            $scope.sel100GEClass = speed == "100GE" ? "active" : "";
         }
 
-        $scope.selSpeed = "25M";
+        $scope.selSpeed = "15M";
         $scope.typeLabel = "DSL";
-
-
+        $scope.sel15Class = "active"
+        $scope.sel25Class = "";
+        $scope.sel50Class = "";
+        $scope.sel100Class = "";
+        $scope.selGEClass = "";
+        $scope.sel100GEClass = "";
 
     }]);
 
@@ -499,6 +542,11 @@
                                                         "BX-P - 10GE - 400GE", "Transit-peer - 100GE - 400GE"
                                                     ]
                                                 }
+                                            },
+                                            parent:{
+                                                type:"string",
+                                                title: "Router Type",
+                                                enum:["Core", "Edge"]
                                             }
                                         }
                                     },
@@ -557,7 +605,6 @@
                 );
 
                 editor.on("change", function() {
-
                     var v = editor.getValue();
                     scope.model = v;
                     scope.$apply(function() {

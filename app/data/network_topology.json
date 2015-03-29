@@ -1,14 +1,18 @@
 {
   "nodes": [
+    {"data":{"id":"Edge"}},
+    {"data":{"id":"Core"}},
     {
       "data": {
         "id":"PE1",
+        "parent":"Edge",
         "slots": ["UNI - 10BT/100BT 2GE", "NNI - 40GE - 160GE"]
       }
     },
     {
       "data": {
         "id":"P1",
+        "parent":"Core",
         "slots": ["PE-P - 10GE - 100GE", "P-P/BX - 10GE - 400GE"]
       }
     },
