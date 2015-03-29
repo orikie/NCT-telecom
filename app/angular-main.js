@@ -125,7 +125,7 @@
                 id : '@',
                 model: '='
             },
-            template:'<button class="btn btn-default" ng-click="reset()">Reset Fit</button>',
+            template:'<button class="btn btn-default" ng-click="reset()">Fit Nodes</button>',
             link: function(scope, element) {
 
                 var nvis = new networkVisFactory(scope.id, _globals.topologyModel);
@@ -247,7 +247,6 @@
                     _globals.topologyModel = d;
                     _globals.topoLoaded = true;
                     $scope.topoModel = _globals.topologyModel;
-                    console.log($scope.topoModel);
                 }
             });
         }
@@ -395,20 +394,23 @@
                 editor.on("change", function() {
 
                     var v = editor.getValue();
-                    scope.model = v;
-                    switch (scope.title) {
-                        case "P":
-                            _globals.pCostModel = v;
-                            break;
-                        case "PE":
-                            _globals.peCostModel = v;
-                            break;
-                        case "BX":
-                            _globals.bxCostModel = v;
-                            break;
-                        default:
 
-                    }
+                    scope.$apply(function() {
+                        scope.model = v;
+                        switch (scope.title) {
+                            case "P":
+                                _globals.pCostModel = v;
+                                break;
+                            case "PE":
+                                _globals.peCostModel = v;
+                                break;
+                            case "BX":
+                                _globals.bxCostModel = v;
+                                break;
+                            default:
+
+                        }
+                    });
 
                 });
 
