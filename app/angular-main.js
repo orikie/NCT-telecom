@@ -95,7 +95,7 @@
                 minZoom: 1,
 
                 layout: {
-                    name: 'grid',
+                    name: 'cose',
                     padding: 5
                 }
             });
@@ -106,13 +106,16 @@
 
         function validTopology(t) {
 
-            if (typeof t !== 'undefined') {
+            if (typeof t !== 'undefined' && !jQuery.isEmptyObject(t)) {
+                console.log(t);
                 for(var i = 0; i < t.nodes.length; i++) {
                     if(t.nodes[i].data.id === "") return false;
                 }
 
                 for(var j = 0; j < t.edges.length; j++) {
-                    if(t.edges[j].data.id === "") return false;
+                    var e = t.edges[j];
+                    if(e.data.id === "" || e.data.source ==="" || e.data.target ==="")
+                        return false;
                 }
             }
 
@@ -133,7 +136,9 @@
 
                 scope.$watch('model', function(d) {
 
-                    if (!jQuery.isEmptyObject(d) && validTopology(d)) {
+                    var v = validTopology(d);
+                    console.log('valid', v);
+                    if (!jQuery.isEmptyObject(d) && v) {
                         nvis.cy.load(d);
                     }
                 });
@@ -446,7 +451,22 @@
                                         properties: {
                                             id: {
                                                 type: "string",
-                                                title: "ID"
+                                                title: "ID",
+                                                description: "Each router must have a unique ID number."
+                                            },
+                                            slots: {
+                                                type: "array",
+                                                title: "Installed Slots",
+                                                format:"table",
+
+                                                items: {
+                                                    type: "string",
+                                                    enum: [
+                                                        "UNI - 10BT/100BT - 2GE", "NNI - 40GE - 160GE",
+                                                        "PE-P - 10GE - 100GE", "P-P/BX - 10BE - 400GE",
+                                                        "BX-P - 10GE - 400GE", "Transit-peer - 100GE - 400GE"
+                                                    ]
+                                                }
                                             }
                                         }
                                     },
