@@ -1,8 +1,53 @@
 
 <div class="row">
-    <div class="col-lg-12">
-        <h1 class="page-header">Case Analysis</h1>
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li class="active">Case Analysis</li>
+        </ol>
     </div>
 
-    Analysis
+
+    <div class="col-md-6">
+        <div class="col-md-6">
+            <div class="thumbnail connection-type-box" ng-click="selConnectionType('DSL')" ng-class="dslClass">
+                <h1>DSL</h1>
+                <p>Digital subscriber line</p>
+            </div>
+
+        </div>
+        <div class="col-md-6">
+            <div class="thumbnail connection-type-box" ng-click="selConnectionType('VPN')" ng-class="vpnClass">
+                <h1>VPN</h1>
+                <p>Virtual Private Network</p>
+            </div>
+
+        </div>
+
+
+        <div class="col-md-12">
+            <div class="btn-group" role="group" aria-label="...">
+                <button type="button" class="btn btn-default" ng-click="selSpeedClick('15M')">15M</button>
+                <button type="button" class="btn btn-default"ng-click="selSpeedClick('25M')">25M</button>
+                <button type="button" class="btn btn-default"ng-click="selSpeedClick('50M')">50M</button>
+                <button type="button" class="btn btn-default"ng-click="selSpeedClick('100M')">100M</button>
+                <button type="button" class="btn btn-default"ng-click="selSpeedClick('GE')">GE</button>
+                <button type="button" class="btn btn-default"ng-click="selSpeedClick('100GE')">100GE</button>
+            </div>
+
+            <div id="selSpeed">
+                <p>Selected Options: </p>
+                <p class="spLabel">{{typeLabel}} {{selSpeed}}</p>
+            </div>
+
+        </div>
+
+
+
+
+    </div>
+    <div class="col-md-6">
+        Cost Calculations
+    </div>
+
+
 </div>

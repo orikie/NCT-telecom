@@ -107,7 +107,6 @@
         function validTopology(t) {
 
             if (typeof t !== 'undefined' && !jQuery.isEmptyObject(t)) {
-                console.log(t);
                 for(var i = 0; i < t.nodes.length; i++) {
                     if(t.nodes[i].data.id === "") return false;
                 }
@@ -137,7 +136,6 @@
                 scope.$watch('model', function(d) {
 
                     var v = validTopology(d);
-                    console.log('valid', v);
                     if (!jQuery.isEmptyObject(d) && v) {
                         nvis.cy.load(d);
                     }
@@ -259,7 +257,41 @@
 
     }]);
 
-    app.controller('AnalysisController', ['$scope', 'version', function($scope, version) {
+    app.controller('AnalysisController', ['$scope', function($scope) {
+
+        var DSL_TYPE = 1;
+        var VPN_TYPE = 2;
+
+        $scope.dslClass = "ct-selected";
+        $scope.vpnClass = "";
+
+        var connectionType = DSL_TYPE;
+
+        $scope.selConnectionType = function(type){
+
+            if(type==="DSL") {
+                $scope.dslClass = "ct-selected";
+                $scope.vpnClass = "";
+                connectionType = DSL_TYPE;
+                $scope.typeLabel = type;
+
+            }
+            else if(type==="VPN") {
+                $scope.vpnClass = "ct-selected";
+                $scope.dslClass = "";
+                connectionType = VPN_TYPE;
+                $scope.typeLabel = type;
+            }
+        };
+
+        $scope.selSpeedClick = function(speed) {
+            $scope.selSpeed = speed;
+        }
+
+        $scope.selSpeed = "25M";
+        $scope.typeLabel = "DSL";
+
+
 
     }]);
 
