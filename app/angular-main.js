@@ -297,6 +297,7 @@
 
         var connectionType = DSL_TYPE;
 
+
         $scope.selConnectionType = function(type){
 
             if(type==="DSL") {
@@ -341,7 +342,10 @@
         $scope.coreRouters = _globals.coreRouters;
 
         $scope.peSelected = ["PE1"];
+        $scope["PE1"] = false;
         $scope.peSel = function(pe) {
+            console.log(pe, $scope[pe]);
+            $scope[pe] = !$scope[pe];
             var i = $scope.peSelected.indexOf(pe);
             if( i < 0) {
                 $scope.peSelected.push(pe);
@@ -376,6 +380,9 @@
         };
 
         $scope.ready = dataReady();
+        $scope.singlePEUNICost = 0;
+        $scope.singlePENNICost = 0;
+        $scope.singlePEHCost = 0;
 
         //Calculate cost of PE Hardware per user
         function routerHardwareCost (_modelName) {
@@ -396,12 +403,18 @@
                         return;
                 }
 
-                return (
-                $scope[_modelName].hardware.chasis +
-                $scope[_modelName].hardware.memory +
-                $scope[_modelName].hardware.power +
-                $scope[_modelName].hardware.processor
-                ) * WARRANTY_INSTALL_PC / totalUsers;
+                var t = (
+                    $scope[_modelName].hardware.chasis +
+                    $scope[_modelName].hardware.memory +
+                    $scope[_modelName].hardware.power +
+                    $scope[_modelName].hardware.processor
+                    ) * WARRANTY_INSTALL_PC / totalUsers;
+
+                if (_modelName== "peCostModel") {
+                    $scope.singlePEHCost = t;
+                }
+
+                return t;
             } else {
                 return 0;
             }
@@ -468,6 +481,11 @@
                             UNISum += (m.cost / m.ports);
                         }
                     }
+
+                    if (i == 0) {
+                        console.log("UNI",UNISum);
+                        $scope.singlePEUNICost = UNISum;
+                    }
                 }
             }
 
@@ -482,7 +500,6 @@
                 return (+s.substr(0, s.length - 2)) * 1000;
             }
         }
-
 
         function peNNISlotCost () {
             var UNISum = 0;
@@ -502,6 +519,10 @@
 
                             UNISum += (selectedSpeedMB() / ( m.capacity * ROUTER_MAX_UTILIZATION)) * m.cost;
                         }
+                    }
+
+                    if (i == 0) {
+                        $scope.singlePENNICost = UNISum;
                     }
                 }
             }
@@ -577,6 +598,11 @@
                 var pe = totalPECost();
                 var p = singlePCost();
                 var b = singleBXCost();
+
+                if (connectionType == VPN_TYPE) {
+                    pe += ($scope.singlePEHCost + $scope.singlePEUNICost + $scope.singlePENNICost);
+
+                }
 
                 $scope.peCostTotal = pe.formatMoney(2);
                 $scope.pCostTotal = p.formatMoney(2);
@@ -794,7 +820,7 @@
                                             parent:{
                                                 type:"string",
                                                 title: "Router Type",
-                                                enum:["Core", "Edge"]
+                                                enum:["Core", "Edge", ""]
                                             }
                                         }
                                     },

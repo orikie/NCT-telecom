@@ -11,6 +11,13 @@
     },
     {
       "data": {
+        "id":"PE2",
+        "parent":"Edge",
+        "slots": ["UNI - 10BT/100BT 2GE", "NNI - 40GE - 160GE"]
+      }
+    },
+    {
+      "data": {
         "id":"P1",
         "parent":"Core",
         "slots": ["PE-P - 10GE - 100GE", "P-P/BX - 10GE - 400GE"]
@@ -25,6 +32,7 @@
   ],
   "edges": [
     {"data": {"id":"PE1-P1", "source":"PE1", "target":"P1"}},
+    {"data": {"id":"PE2-P1", "source":"PE2", "target":"P1"}},
     {"data": {"id":"P1-BX1", "source":"P1", "target":"BX1"}}
   ]
 }
