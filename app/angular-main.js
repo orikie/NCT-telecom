@@ -18,7 +18,8 @@
            topoLoaded: false,
            topologyModel: {},
            edgeRouters: [],
-           coreRouters: []
+           coreRouters: [],
+           borderRouter: {}
        };
     });
 
@@ -165,6 +166,11 @@
                         _globals.edgeRouters = edge.descendants();
                     }
 
+                    var border = nvis.cy.collection("#BX1");
+                    if(edge.length != 0) {
+                        _globals.borderRouter = border[0].data();
+                        console.log(_globals.borderRouter);
+                    }
                 });
 
                 scope.reset = function() {
@@ -318,7 +324,7 @@
             $scope.sel100Class = speed == "100M" ? "active" : "";
             $scope.selGEClass = speed == "1GE" ? "active" : "";
             $scope.sel100GEClass = speed == "100GE" ? "active" : "";
-            console.log(singlePCost());
+            console.log(singleBXCost());
         }
 
         $scope.selSpeed = "15M";
@@ -494,7 +500,7 @@
             }
             return UNISum;
         }
-        
+
 
         function totalPECost() {
             return peUNISlotCost() + peNNISlotCost() + routerHardwareCost("peCostModel");
@@ -511,9 +517,7 @@
         }
 
         function singlePCost() {
-            console.log($scope.pCostModel);
             var hardware = routerHardwareCost("pCostModel");
-            console.log(hardware);
 
             var pepm = findSlotModel("pCostModel", "PE-P");
             var pepbx = findSlotModel("pCostModel", "P-P/BX");
@@ -525,17 +529,19 @@
             return hardware + pepCost + pepbxCost;
         }
 
+        function singleBXCost() {
+            var h = routerHardwareCost("bxCostModel");
 
-        //console.log(_globals.peCostModel);
+            var s1 = findSlotModel("bxCostModel", "BX-P");
+            var s2 = findSlotModel("bxCostModel", "Transit-peer");
+
+            var s1c = ((selectedSpeedMB() / (s1.capacity * ROUTER_MAX_UTILIZATION)) * s1.material * WARRANTY_INSTALL_PC);
+
+            var s2c =((selectedSpeedMB() / (s2.capacity * ROUTER_MAX_UTILIZATION)) * s2.material * WARRANTY_INSTALL_PC);
 
 
-        //console.log(_globals.edgeRouters);
-
-
-        //console.log("PE", peHardwareCost());
-
-        //peUNICost();
-
+            return h + s1c + s2c;
+        }
 
     }]);
 
