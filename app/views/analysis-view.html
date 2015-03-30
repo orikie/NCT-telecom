@@ -9,7 +9,7 @@
 
 
 
-    <div class="col-md-6">
+    <div class="col-md-6 analysis-input">
         <div class="col-md-12">
             <div class="analysis-strong-lbl">
                 <strong>Connection Type</strong>
@@ -43,7 +43,7 @@
                 <button type="button" class="btn btn-default" ng-click="selSpeedClick('25M')" ng-class="sel25Class">25M</button>
                 <button type="button" class="btn btn-default" ng-click="selSpeedClick('50M')" ng-class="sel50Class">50M</button>
                 <button type="button" class="btn btn-default" ng-click="selSpeedClick('100M')" ng-class="sel100Class">100M</button>
-                <button type="button" class="btn btn-default" ng-click="selSpeedClick('GE')" ng-class="selGEClass">GE</button>
+                <button type="button" class="btn btn-default" ng-click="selSpeedClick('1GE')" ng-class="selGEClass">1GE</button>
                 <button type="button" class="btn btn-default" ng-click="selSpeedClick('100GE')" ng-class="sel100GEClass">100GE</button>
 
             </div>
@@ -83,7 +83,9 @@
 
     </div>
     <div class="col-md-6">
-        Cost Calculations
+        <div class="col-md-12 cost-div">
+            <h3>Final Cost</h3> <h4 style="color:darkred">${{finalCost}}</h4>
+        </div>
 
     </div>
 

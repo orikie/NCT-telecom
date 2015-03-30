@@ -1,12 +1,10 @@
 
-(function(){
+(function() {
 
     var app = angular.module('nctTelecom', ['ngRoute']);
 
-    /**
-     * Current Version
-     */
-    app.value('version', '0.2.3')
+    app.value('version', '0.2.3');
+
     app.value('repoLink', 'https://github.com/linjoey/NCT-telecom');
 
     app.factory('_globals', function() {
@@ -148,9 +146,6 @@
                 var nvis = new networkVisFactory(scope.id, _globals.topologyModel);
                 element.addClass('network-vis-container');
 
-
-                console.log();
-
                 scope.$watch('model', function(d) {
 
                     var v = validTopology(d);
@@ -208,9 +203,6 @@
         };
     }]);
 
-    /**
-     * Main Page Controller
-     */
     app.controller('MainController', ['$scope', 'version','repoLink', function($scope, version, repoLink) {
         $scope.version = version;
         $scope.repoLink = repoLink;
@@ -218,11 +210,9 @@
     }]);
 
     app.controller('DashController', ['$scope', 'version', function($scope, version) {
-
     }]);
 
-    app.controller('GeneralConfigController', ['$scope', 'version', function($scope, version) {
-
+    app.controller('GeneralConfigController', ['$scope', function($scope) {
     }]);
 
     app.controller('CostmodelConfigController', ['$scope', 'loadData','_globals', function($scope, loadData, _globals) {
@@ -269,7 +259,6 @@
         }
         $scope.bxCost = _globals.bxCostModel;
 
-
     }]);
 
     app.controller('TopologyConfigController', ['$scope','loadData','_globals', function($scope, loadData, _globals) {
@@ -290,6 +279,10 @@
     }]);
 
     app.controller('AnalysisController', ['$scope','_globals', function($scope, _globals) {
+
+        function stringEndsWith(str, suffix) {
+            return str.indexOf(suffix, str.length - suffix.length) !== -1;
+        }
 
         var DSL_TYPE = 1;
         var VPN_TYPE = 2;
@@ -323,7 +316,7 @@
             $scope.sel25Class = speed == "25M" ? "active" : "";
             $scope.sel50Class = speed == "50M" ? "active" : "";
             $scope.sel100Class = speed == "100M" ? "active" : "";
-            $scope.selGEClass = speed == "GE" ? "active" : "";
+            $scope.selGEClass = speed == "1GE" ? "active" : "";
             $scope.sel100GEClass = speed == "100GE" ? "active" : "";
         }
 
@@ -339,7 +332,7 @@
         $scope.edgeRouters = _globals.edgeRouters;
         $scope.coreRouters = _globals.coreRouters;
 
-        $scope.peSelected = [];
+        $scope.peSelected = ["PE1"];
         $scope.peSel = function(pe) {
             var i = $scope.peSelected.indexOf(pe);
             if( i < 0) {
@@ -348,18 +341,159 @@
             }else {
                 $scope.peSelected.splice(i, 1);
             }
+
+            console.log(peNNISlotCost());
         }
 
         $scope.showPEError = function() {
             return $scope.peSelected.length >= 1 ? false : true;
         }
 
+        $scope.finalCost = 700.30;
+
+        $scope.peCostModel = _globals.peCostModel;
+        $scope.pCostModel = _globals.pCostModel;
+        $scope.bxCostModel = _globals.bxCostModel;
+
+        var PE_TOTAL_USERS = 2000,
+            P_TOTAL_USERS = 15000,
+            BX_TOTAL_USERS = 30000,
+            WARRANTY_INSTALL_PC = 1.2, //20%
+            ROUTER_MAX_UTILIZATION = 0.7; //70%
+
+
+        function dataReady() {
+            return (
+                _globals.pLoaded && _globals.peLoaded &&
+                _globals.bxLoaded && _globals.topoLoaded
+            );
+        }
+
+        //Calculate cost of PE Hardware per user
+        function peHardwareCost () {
+            if (dataReady()) {
+                return (
+                $scope.peCostModel.hardware.chasis +
+                $scope.peCostModel.hardware.memory +
+                $scope.peCostModel.hardware.power +
+                $scope.peCostModel.hardware.processor
+                ) * WARRANTY_INSTALL_PC / PE_TOTAL_USERS;
+            } else {
+                return 0;
+            }
+        }
+
+        //GET topology PE Model by ID
+        function findPEByID(pid) {
+            for(var i = 0; i < _globals.edgeRouters.length; i++) {
+                var d = _globals.edgeRouters[i].data();
+                if (d.id == pid) return d;
+            }
+        }
+
+        function slotCostModel(router, type) {
+            var c = {
+                cost : 0,
+                ports : 0,
+                capacity: 0
+            };
+
+            var routerModelType = "";
+            switch (router) {
+                case "PE":
+                    routerModelType = "peCostModel";
+                    break;
+                case "P":
+                    routerModelType = "pCostModel";
+                    break;
+                case "BX":
+                    routerModelType = "bxCostModel";
+                    break;
+                default:
+                    return c;
+            }
+
+            for (var i = 0; i < _globals[routerModelType].slots.length; i++) {
+                var s = _globals.peCostModel.slots[i];
+                if (s.config === type) {
+                    c.cost = s.material * WARRANTY_INSTALL_PC;
+                    c.ports = s.ports;
+                    c.capacity = s.capacity;
+                }
+            }
+
+            return c;
+        }
+
+        //Calculate cost of ALL PE slots for type == UNI or NNI
+        function peUNISlotCost () {
+            var UNISum = 0;
+            for(var i = 0; i < $scope.peSelected.length; i++ ) {
+                var peID = $scope.peSelected[i];
+                var peModel = findPEByID(peID);
+                //console.log(peModel);
+
+                for(var j = 0; j < peModel.slots.length; j++) {
+
+                    var s = peModel.slots[j];
+                    //console.log(s);
+                    if (s.indexOf("UNI") === 0) {
+
+                        var m = slotCostModel("PE", "UNI");
+                        UNISum += (m.cost / m.ports);
+                    }
+                }
+            }
+            return UNISum;
+        }
+
+        function selectedSpeedMB() {
+            var s = $scope.selSpeed;
+            if (stringEndsWith(s, "M")) {
+                return +s.substr(0, s.length - 1);
+            } else {
+                return (+s.substr(0, s.length - 2)) * 1000;
+            }
+        }
+
+
+        function peNNISlotCost () {
+            var UNISum = 0;
+            for(var i = 0; i < $scope.peSelected.length; i++ ) {
+                var peID = $scope.peSelected[i];
+                var peModel = findPEByID(peID);
+
+                for(var j = 0; j < peModel.slots.length; j++) {
+
+                    var s = peModel.slots[j];
+                    //console.log(s);
+                    if (s.indexOf("NNI") === 0) {
+
+                        var m = slotCostModel("PE", "NNI");
+
+                        UNISum += (selectedSpeedMB() / ( m.capacity * ROUTER_MAX_UTILIZATION)) * m.cost;
+                    }
+                }
+            }
+            return UNISum;
+
+        }
+
+
+
+        //console.log(_globals.peCostModel);
+
+
+        //console.log(_globals.edgeRouters);
+
+
+        //console.log("PE", peHardwareCost());
+
+        //peUNICost();
+
 
     }]);
 
-    /**
-     * Page Routing
-     */
     app.config(['$routeProvider', function($routeProvider) {
         $routeProvider
             .when('/', {
@@ -449,7 +583,7 @@
                         },
                         "slots" : {
                             "type" :"array",
-                            "title" : "Slots",
+                            "title" : "Slot Types",
                             "format" : "table",
                             "items": {
                                 "type": "object",
@@ -515,7 +649,7 @@
 
             }
         }
-    }])
+    }]);
 
     app.directive('topologyModelEditor', ['_globals', function(_globals){
         return {
