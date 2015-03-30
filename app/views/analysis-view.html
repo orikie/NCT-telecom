@@ -66,6 +66,7 @@
                 <button ng-repeat="cr in edgeRouters"
                         type="button" class="btn btn-default"
                         ng-click="peSel(cr.data().id)"
+                        ng-class="{'active': peActiveButton(cr.data().id)}"
                         >
                     {{cr.data().id}}
                 </button>

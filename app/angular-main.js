@@ -344,7 +344,7 @@
         $scope.peSelected = ["PE1"];
         $scope["PE1"] = false;
         $scope.peSel = function(pe) {
-            console.log(pe, $scope[pe]);
+            //console.log(pe, $scope[pe]);
             $scope[pe] = !$scope[pe];
             var i = $scope.peSelected.indexOf(pe);
             if( i < 0) {
@@ -483,7 +483,7 @@
                     }
 
                     if (i == 0) {
-                        console.log("UNI",UNISum);
+                        //console.log("UNI",UNISum);
                         $scope.singlePEUNICost = UNISum;
                     }
                 }
@@ -613,6 +613,10 @@
 
         calc();
 
+        $scope.peActiveButton = function (d) {
+            
+            return ($scope.peSelected.indexOf(d) !== -1) ? true : false;
+        }
     }]);
 
     app.config(['$routeProvider', function($routeProvider) {
