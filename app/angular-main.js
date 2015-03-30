@@ -357,8 +357,6 @@
             return $scope.peSelected.length >= 1 ? false : true;
         };
 
-        $scope.finalCost = 700.30;
-
         $scope.peCostModel = _globals.peCostModel;
         $scope.pCostModel = _globals.pCostModel;
         $scope.bxCostModel = _globals.bxCostModel;
@@ -562,13 +560,29 @@
             return 0;
         }
 
-
+        //http://stackoverflow.com/questions/149055/how-can-i-format-numbers-as-money-in-javascript
+        Number.prototype.formatMoney = function(c, d, t){
+            var n = this,
+                c = isNaN(c = Math.abs(c)) ? 2 : c,
+                d = d == undefined ? "." : d,
+                t = t == undefined ? "," : t,
+                s = n < 0 ? "-" : "",
+                i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "",
+                j = (j = i.length) > 3 ? j % 3 : 0;
+            return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+        };
 
         function calc () {
-            $scope.peCostTotal = totalPECost().toFixed(2);
-            $scope.pCostTotal = singlePCost().toFixed(2);
-            $scope.bxCostTotal = singleBXCost().toFixed(2);
+            if (dataReady()) {
+                var pe = totalPECost();
+                var p = singlePCost();
+                var b = singleBXCost();
 
+                $scope.peCostTotal = pe.formatMoney(2);
+                $scope.pCostTotal = p.formatMoney(2);
+                $scope.bxCostTotal = b.formatMoney(2);
+                $scope.finalCost = (pe + p + b).formatMoney(2);
+            }
         }
 
         calc();
