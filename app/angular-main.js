@@ -169,7 +169,6 @@
                     var border = nvis.cy.collection("#BX1");
                     if(edge.length != 0) {
                         _globals.borderRouter = border[0].data();
-                        console.log(_globals.borderRouter);
                     }
                 });
 
@@ -314,6 +313,8 @@
                 $scope.typeLabel = type;
             }
 
+            calc();
+
         };
 
         $scope.selSpeedClick = function(speed) {
@@ -324,8 +325,8 @@
             $scope.sel100Class = speed == "100M" ? "active" : "";
             $scope.selGEClass = speed == "1GE" ? "active" : "";
             $scope.sel100GEClass = speed == "100GE" ? "active" : "";
-            console.log(singleBXCost());
-        }
+            calc();
+        };
 
         $scope.selSpeed = "15M";
         $scope.typeLabel = "DSL";
@@ -348,19 +349,19 @@
             }else {
                 $scope.peSelected.splice(i, 1);
             }
+            calc();
 
-        }
+        };
 
         $scope.showPEError = function() {
             return $scope.peSelected.length >= 1 ? false : true;
-        }
+        };
 
         $scope.finalCost = 700.30;
 
         $scope.peCostModel = _globals.peCostModel;
         $scope.pCostModel = _globals.pCostModel;
         $scope.bxCostModel = _globals.bxCostModel;
-        console.log($scope.bxCostModel);
 
         var PE_TOTAL_USERS = 2000,
             P_TOTAL_USERS = 15000,
@@ -374,7 +375,9 @@
                 _globals.pLoaded && _globals.peLoaded &&
                 _globals.bxLoaded && _globals.topoLoaded
             );
-        }
+        };
+
+        $scope.ready = dataReady();
 
         //Calculate cost of PE Hardware per user
         function routerHardwareCost (_modelName) {
@@ -451,22 +454,25 @@
         //Calculate cost of ALL PE slots for type == UNI or NNI
         function peUNISlotCost () {
             var UNISum = 0;
-            for(var i = 0; i < $scope.peSelected.length; i++ ) {
-                var peID = $scope.peSelected[i];
-                var peModel = findPEByID(peID);
-                //console.log(peModel);
+            if(dataReady()) {
+                for(var i = 0; i < $scope.peSelected.length; i++ ) {
+                    var peID = $scope.peSelected[i];
+                    var peModel = findPEByID(peID);
+                    //console.log(peModel);
 
-                for(var j = 0; j < peModel.slots.length; j++) {
+                    for(var j = 0; j < peModel.slots.length; j++) {
 
-                    var s = peModel.slots[j];
-                    //console.log(s);
-                    if (s.indexOf("UNI") === 0) {
+                        var s = peModel.slots[j];
+                        //console.log(s);
+                        if (s.indexOf("UNI") === 0) {
 
-                        var m = slotCostModel("PE", "UNI");
-                        UNISum += (m.cost / m.ports);
+                            var m = slotCostModel("PE", "UNI");
+                            UNISum += (m.cost / m.ports);
+                        }
                     }
                 }
             }
+
             return UNISum;
         }
 
@@ -482,22 +488,26 @@
 
         function peNNISlotCost () {
             var UNISum = 0;
-            for(var i = 0; i < $scope.peSelected.length; i++ ) {
-                var peID = $scope.peSelected[i];
-                var peModel = findPEByID(peID);
 
-                for(var j = 0; j < peModel.slots.length; j++) {
+            if(dataReady()) {
+                for(var i = 0; i < $scope.peSelected.length; i++ ) {
+                    var peID = $scope.peSelected[i];
+                    var peModel = findPEByID(peID);
 
-                    var s = peModel.slots[j];
-                    //console.log(s);
-                    if (s.indexOf("NNI") === 0) {
+                    for(var j = 0; j < peModel.slots.length; j++) {
 
-                        var m = slotCostModel("PE", "NNI");
+                        var s = peModel.slots[j];
+                        //console.log(s);
+                        if (s.indexOf("NNI") === 0) {
 
-                        UNISum += (selectedSpeedMB() / ( m.capacity * ROUTER_MAX_UTILIZATION)) * m.cost;
+                            var m = slotCostModel("PE", "NNI");
+
+                            UNISum += (selectedSpeedMB() / ( m.capacity * ROUTER_MAX_UTILIZATION)) * m.cost;
+                        }
                     }
                 }
             }
+
             return UNISum;
         }
 
@@ -506,42 +516,62 @@
             return peUNISlotCost() + peNNISlotCost() + routerHardwareCost("peCostModel");
         }
 
+
         function findSlotModel(_routerModel, slotconfig) {
 
-            for(var i = 0; i< _globals[_routerModel].slots.length; i++) {
-                var s = _globals[_routerModel].slots[i];
-                if (s.config === slotconfig) {
-                    return s;
+            if (dataReady()) {
+                for(var i = 0; i< _globals[_routerModel].slots.length; i++) {
+                    var s = _globals[_routerModel].slots[i];
+                    if (s.config === slotconfig) {
+                        return s;
+                    }
                 }
             }
+
         }
 
         function singlePCost() {
-            var hardware = routerHardwareCost("pCostModel");
+            if (dataReady()) {
+                var hardware = routerHardwareCost("pCostModel");
 
-            var pepm = findSlotModel("pCostModel", "PE-P");
-            var pepbx = findSlotModel("pCostModel", "P-P/BX");
+                var pepm = findSlotModel("pCostModel", "PE-P");
+                var pepbx = findSlotModel("pCostModel", "P-P/BX");
 
-            var pepCost = ((selectedSpeedMB() / (pepm.capacity * ROUTER_MAX_UTILIZATION)) * pepm.material * WARRANTY_INSTALL_PC);
+                var pepCost = ((selectedSpeedMB() / (pepm.capacity * ROUTER_MAX_UTILIZATION)) * pepm.material * WARRANTY_INSTALL_PC);
 
-            var pepbxCost =((selectedSpeedMB() / (pepbx.capacity * ROUTER_MAX_UTILIZATION)) * pepbx.material * WARRANTY_INSTALL_PC);
+                var pepbxCost =((selectedSpeedMB() / (pepbx.capacity * ROUTER_MAX_UTILIZATION)) * pepbx.material * WARRANTY_INSTALL_PC);
 
-            return hardware + pepCost + pepbxCost;
+                return hardware + pepCost + pepbxCost;
+            }
+
+            return 0;
         }
 
         function singleBXCost() {
-            var h = routerHardwareCost("bxCostModel");
+            if (dataReady()) {
+                var h = routerHardwareCost("bxCostModel");
 
-            var s1 = findSlotModel("bxCostModel", "BX-P");
-            var s2 = findSlotModel("bxCostModel", "Transit-peer");
+                var s1 = findSlotModel("bxCostModel", "BX-P");
+                var s2 = findSlotModel("bxCostModel", "Transit-peer");
 
-            var s1c = ((selectedSpeedMB() / (s1.capacity * ROUTER_MAX_UTILIZATION)) * s1.material * WARRANTY_INSTALL_PC);
+                var s1c = ((selectedSpeedMB() / (s1.capacity * ROUTER_MAX_UTILIZATION)) * s1.material * WARRANTY_INSTALL_PC);
+                var s2c =((selectedSpeedMB() / (s2.capacity * ROUTER_MAX_UTILIZATION)) * s2.material * WARRANTY_INSTALL_PC);
 
-            var s2c =((selectedSpeedMB() / (s2.capacity * ROUTER_MAX_UTILIZATION)) * s2.material * WARRANTY_INSTALL_PC);
-
-
-            return h + s1c + s2c;
+                return h + s1c + s2c;
+            }
+            return 0;
         }
+
+
+
+        function calc () {
+            $scope.peCostTotal = totalPECost().toFixed(2);
+            $scope.pCostTotal = singlePCost().toFixed(2);
+            $scope.bxCostTotal = singleBXCost().toFixed(2);
+
+        }
+
+        calc();
 
     }]);
 
