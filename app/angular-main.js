@@ -318,6 +318,7 @@
             $scope.sel100Class = speed == "100M" ? "active" : "";
             $scope.selGEClass = speed == "1GE" ? "active" : "";
             $scope.sel100GEClass = speed == "100GE" ? "active" : "";
+            console.log(singlePCost());
         }
 
         $scope.selSpeed = "15M";
@@ -342,7 +343,6 @@
                 $scope.peSelected.splice(i, 1);
             }
 
-            console.log(peNNISlotCost());
         }
 
         $scope.showPEError = function() {
@@ -354,6 +354,7 @@
         $scope.peCostModel = _globals.peCostModel;
         $scope.pCostModel = _globals.pCostModel;
         $scope.bxCostModel = _globals.bxCostModel;
+        console.log($scope.bxCostModel);
 
         var PE_TOTAL_USERS = 2000,
             P_TOTAL_USERS = 15000,
@@ -370,14 +371,30 @@
         }
 
         //Calculate cost of PE Hardware per user
-        function peHardwareCost () {
+        function routerHardwareCost (_modelName) {
             if (dataReady()) {
+
+                var totalUsers = 0;
+                switch (_modelName) {
+                    case "peCostModel":
+                        totalUsers = PE_TOTAL_USERS;
+                        break;
+                    case "pCostModel":
+                        totalUsers = P_TOTAL_USERS;
+                        break;
+                    case "bxCostModel":
+                        totalUsers = BX_TOTAL_USERS;
+                        break;
+                    default:
+                        return;
+                }
+
                 return (
-                $scope.peCostModel.hardware.chasis +
-                $scope.peCostModel.hardware.memory +
-                $scope.peCostModel.hardware.power +
-                $scope.peCostModel.hardware.processor
-                ) * WARRANTY_INSTALL_PC / PE_TOTAL_USERS;
+                $scope[_modelName].hardware.chasis +
+                $scope[_modelName].hardware.memory +
+                $scope[_modelName].hardware.power +
+                $scope[_modelName].hardware.processor
+                ) * WARRANTY_INSTALL_PC / totalUsers;
             } else {
                 return 0;
             }
@@ -476,9 +493,37 @@
                 }
             }
             return UNISum;
+        }
+        
 
+        function totalPECost() {
+            return peUNISlotCost() + peNNISlotCost() + routerHardwareCost("peCostModel");
         }
 
+        function findSlotModel(_routerModel, slotconfig) {
+
+            for(var i = 0; i< _globals[_routerModel].slots.length; i++) {
+                var s = _globals[_routerModel].slots[i];
+                if (s.config === slotconfig) {
+                    return s;
+                }
+            }
+        }
+
+        function singlePCost() {
+            console.log($scope.pCostModel);
+            var hardware = routerHardwareCost("pCostModel");
+            console.log(hardware);
+
+            var pepm = findSlotModel("pCostModel", "PE-P");
+            var pepbx = findSlotModel("pCostModel", "P-P/BX");
+
+            var pepCost = ((selectedSpeedMB() / (pepm.capacity * ROUTER_MAX_UTILIZATION)) * pepm.material * WARRANTY_INSTALL_PC);
+
+            var pepbxCost =((selectedSpeedMB() / (pepbx.capacity * ROUTER_MAX_UTILIZATION)) * pepbx.material * WARRANTY_INSTALL_PC);
+
+            return hardware + pepCost + pepbxCost;
+        }
 
 
         //console.log(_globals.peCostModel);
